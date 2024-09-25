@@ -4,30 +4,42 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const cloud_fn_url = process.env.CLOUD_URL;
+let i = 0;
 
-for (let i = 0; i < 10000; i ++) {
-    console.log(`sending req #${i}`);
-    fetchDataFromUrl(cloud_fn_url);
+fetchRunner();
+
+async function fetchRunner() {
+    while (i < 10000) {
+        await fetchDataFromUrl(cloud_fn_url);
+    }
+    return i;
 }
 
-function fetchDataFromUrl(url) {
+async function fetchDataFromUrl(url) {
     return new Promise((resolve, reject) => {
-        http.get(url, (res) => {
-            let data = '';
+        const intervalId = setInterval(() => {
+            console.log(`sending request ${i++}`);
+            http.get(url, (res) => {
+                let data = '';
 
-            res.on('data', (chunk) => {
-                data += chunk;
+                res.on('data', (chunk) => {
+                    data += chunk;
+                });
+
+
+                res.on('end', () => {
+                    try {
+                        resolve(data);
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+            }).on('error', (error) => {
+                reject(error);
             });
 
-            res.on('end', () => {
-                try {
-                    resolve(data);
-                } catch (error) {
-                    reject(error);
-                }
-            });
-        }).on('error', (error) => {
-            reject(error);
-        });
+            clearInterval(intervalId);
+        }, 5)
+
     });
 }
