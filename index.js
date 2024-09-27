@@ -9,37 +9,39 @@ let i = 0;
 fetchRunner();
 
 async function fetchRunner() {
-    while (i < 10000) {
-        await fetchDataFromUrl(cloud_fn_url);
+    while (i < 100_000) {
+        console.log(i);
+        try {
+            await fetchDataFromUrl(cloud_fn_url);
+        }
+        catch (e) {
+            console.log(e)
+        }
     }
     return i;
 }
 
 async function fetchDataFromUrl(url) {
     return new Promise((resolve, reject) => {
-        const intervalId = setInterval(() => {
-            console.log(`sending request ${i++}`);
-            http.get(url, (res) => {
-                let data = '';
+        i++;
 
-                res.on('data', (chunk) => {
-                    data += chunk;
-                });
+        http.get(url, (res) => {
+            let data = '';
 
-
-                res.on('end', () => {
-                    try {
-                        resolve(data);
-                    } catch (error) {
-                        reject(error);
-                    }
-                });
-            }).on('error', (error) => {
-                reject(error);
+            res.on('data', (chunk) => {
+                data += chunk;
             });
 
-            clearInterval(intervalId);
-        }, 5)
 
+            res.on('end', () => {
+                try {
+                    resolve(data);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }).on('error', (error) => {
+            reject(error);
+        });
     });
 }
